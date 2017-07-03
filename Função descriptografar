@@ -1,0 +1,185 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+
+int descriptografar(char*, char*);
+
+
+int main()
+{
+	char senhaM[10], nomeIMG[30];
+	
+	printf("senha: ");
+	gets(senhaM);
+	printf("nome da imagem: ");
+	gets(nomeIMG);	
+	
+	descriptografar(senhaM, nomeIMG);
+	
+	return 0;
+}
+
+
+int descriptografar(char *senha, char *nome)
+{
+	int tamanho_senha = 0, maior_letra = 0, menor_letra = 255, soma = 0, contador_char = 0; //<<contar caracteres a criptografar; 
+	int *posicao_senha, tam_campo[5/*n_campo*/]; 											//guardar junto da senha pra saber até onde descriptografar
+	int i, j, nova_posicao, ultima_posicao, posicao_contador[5], valor_contador[5];
+	int senha_confere = 0, posicao_tamanho_senha, tamanho_senha_crip = 0, contador_senha = 0;
+	char *senha_crip, *senha_digitada;
+	FILE *img_copia;
+	
+	//achar tamanho da senha
+	while (senha[tamanho_senha] != '\0')
+	{
+		tamanho_senha++;
+	}
+	posicao_senha = (int*) malloc(tamanho_senha*sizeof(int));
+	senha_crip = (char*) malloc(tamanho_senha*sizeof(char));
+	senha_digitada = (char*) malloc(tamanho_senha*sizeof(char));
+	
+	//achar maior e menor caracteres da senha
+	for (i=0; i<tamanho_senha; i++)
+	{
+		senha_digitada[i] = senha[i];
+		if (maior_letra < senha[i])
+		{
+			maior_letra = senha[i];
+		}
+		if (menor_letra > senha[i])
+		{
+			menor_letra = senha[i];
+		}
+		soma += senha[i];
+	}
+	
+	//mudar posições dos caracteres da senha na imagem
+	nova_posicao = tamanho_senha*(maior_letra-menor_letra) + soma;
+	posicao_tamanho_senha = nova_posicao + 15;
+	for (i=0; i<tamanho_senha; i++)
+	{
+		if (i == 0)
+		{
+			posicao_senha[i] = nova_posicao;
+		}
+		else
+		{
+			posicao_senha[i] = posicao_senha[i-1] + nova_posicao;
+		}
+		
+		senha[i] = senha[i] + (i+3) - menor_letra;
+	}
+	
+	//achar tamanho de cada campo preenchido
+/*	for (i=0; i<10n_campo; i++)
+	{
+		tam_campo[i] = 0;
+		while (campo[i][tam_campo[i]] != '\0')
+		{
+			tam_campo[i]++;
+			contador_char++;
+		}
+	}
+*/	
+	//quantidade de caracteres preenchidos
+	ultima_posicao = posicao_senha[tamanho_senha-1];
+	for (i=0; i<5; i++)
+	{
+/*		if (contador_char >= 255)
+		{
+			valor_contador[i] = 255 - menor_letra + tamanho_senha;
+			contador_char -= (255 - menor_letra + tamanho_senha);
+		}
+		else if (contador_char > 0 && contador_char < 255)
+		{
+			valor_contador[i] = contador_char;
+			contador_char = 0;
+		}
+		else
+		{
+			valor_contador[i] = 0;
+		}
+*/		posicao_contador[i] = ultima_posicao + nova_posicao;
+		ultima_posicao = posicao_contador[i];
+	}
+	
+	
+	//**************IMAGEM****************
+	
+	
+	img_copia = fopen(nome, "r+");
+	
+	//extrair senha
+	fseek(img_copia, posicao_tamanho_senha, SEEK_SET);
+	fread(&tamanho_senha_crip, 1, 1, img_copia);
+	tamanho_senha_crip -= (maior_letra-menor_letra);
+	for (i=0; i<tamanho_senha; i++)
+	{
+		fseek(img_copia, posicao_senha[i], SEEK_SET);
+		fread(&senha_crip[i], 1, 1, img_copia);
+		senha_crip[i] = senha_crip[i] + menor_letra - (i+3);
+	}
+	
+	//conferir senha
+	if (tamanho_senha_crip == tamanho_senha)
+	{
+		for (i=0; i<tamanho_senha; i++)
+		{
+			if (senha_crip[i] == senha_digitada[i])
+			{
+				contador_senha++;
+			}
+		}
+		if (contador_senha == tamanho_senha_crip)
+		{
+			senha_confere = 1;
+		}
+	}
+	
+	if (senha_confere == 0)
+	{
+		printf("Senha nao encontrada.\n");
+	}
+	else
+	{
+		//extrair qtd caracteres
+		for (i=0; i<5; i++)
+		{
+			valor_contador[i] = 0;
+			fseek(img_copia, posicao_contador[i], SEEK_SET);
+			fread(&valor_contador[i], 1, 1, img_copia);
+			contador_char += valor_contador[i];
+		}
+		int posicao_campo[contador_char];
+		char campo[contador_char];
+		
+		//mudar posição dos caracteres de cada campo
+		for (i=0; i<contador_char; i++)
+		{
+	//		for (j=0, j<tam_campo[i]; j++)
+	//		{
+				posicao_campo[i] = ultima_posicao + nova_posicao;
+				ultima_posicao = posicao_campo[i];
+	//			campo[i][j] = campo[i][j] - (menor_letra + maior_letra)/10;
+	//		}
+		}
+		
+		//extrair caracteres
+		printf("\ncaracteres preenchidos: ");
+		for (i=0; i<contador_char; i++)
+		{
+	//		for (j=0, j<tam_campo[i]; j++)
+	//		{	
+				fseek(img_copia, posicao_campo[i], SEEK_SET);
+				fread(&campo[i], 1, 1, img_copia);
+				campo[i] = campo[i] - (menor_letra + maior_letra)/10;
+				printf("%c", campo[i]);
+	//		}
+		}
+		printf("\n\n");
+	}
+	fclose(img_copia);
+	system("PAUSE");
+	return senha_confere;
+}
