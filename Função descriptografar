@@ -1,31 +1,36 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
+#define MAX 15
 
+int descriptografar(char*, char comentarioA[MAX][20], char loginA[MAX][20], char senhaA[MAX][30], char*, int);
 
-int descriptografar(char*, char*);
-
-
+//entrada pra teste da função
 int main()
 {
 	char senhaM[10], nomeIMG[30];
+	char comentarioA[MAX][20];
+	char loginA[MAX][20];
+	char senhaA[MAX][30];
+	int contador = 2;
 	
 	printf("senha: ");
 	gets(senhaM);
 	printf("nome da imagem: ");
 	gets(nomeIMG);	
 	
-	descriptografar(senhaM, nomeIMG);
+	descriptografar(senhaM, comentarioA, loginA, senhaA, nomeIMG, contador);
 	
 	return 0;
 }
 
 
-int descriptografar(char *senha, char *nome)
+int descriptografar(char *senha, char comentarioA[MAX][20], char loginA[MAX][20], char senhaA[MAX][30], char *nome, int contador)
 {
-	int tamanho_senha = 0, maior_letra = 0, menor_letra = 255, soma = 0, contador_char = 0; //<<contar caracteres a criptografar; 
-	int *posicao_senha, tam_campo[5/*n_campo*/]; 											//guardar junto da senha pra saber até onde descriptografar
-	int i, j, nova_posicao, ultima_posicao, posicao_contador[5], valor_contador[5];
+	int tamanho_senha = 0, maior_letra = 0, menor_letra = 255, soma = 0, contador_char = 0; 			//<<contar caracteres a criptografar; 
+	int *posicao_senha, i, j, posicao_contador[5], valor_contador[5], nova_posicao, ultima_posicao; 	//guardar junto da senha pra saber até onde descriptografar
+	int posicao_comentarioA[MAX][20], tam_comentarioA[MAX], pos_tam_comentarioA[MAX];
+	int posicao_loginA[MAX][20], tam_loginA[MAX], pos_tam_loginA[MAX];
+	int posicao_senhaA[MAX][20], tam_senhaA[MAX], pos_tam_senhaA[MAX];
 	int senha_confere = 0, posicao_tamanho_senha, tamanho_senha_crip = 0, contador_senha = 0;
 	char *senha_crip, *senha_digitada;
 	FILE *img_copia;
@@ -56,7 +61,7 @@ int descriptografar(char *senha, char *nome)
 	
 	//mudar posições dos caracteres da senha na imagem
 	nova_posicao = tamanho_senha*(maior_letra-menor_letra) + soma;
-	posicao_tamanho_senha = nova_posicao + 15;
+	posicao_tamanho_senha = nova_posicao + 18;
 	for (i=0; i<tamanho_senha; i++)
 	{
 		if (i == 0)
@@ -104,6 +109,13 @@ int descriptografar(char *senha, char *nome)
 		ultima_posicao = posicao_contador[i];
 	}
 	
+	//local dos tamanhos de cada campo
+	for (i=0; i<contador; i++)
+	{
+		pos_tam_comentarioA[i] = tamanho_senha*(maior_letra-menor_letra) + soma + 1 + i;
+		pos_tam_loginA[i] = tamanho_senha*(maior_letra-menor_letra) + soma + 21 + i;
+		pos_tam_senhaA[i] = tamanho_senha*(maior_letra-menor_letra) + soma + 41 + i;
+	}		
 	
 	//**************IMAGEM****************
 	
@@ -121,9 +133,9 @@ int descriptografar(char *senha, char *nome)
 		senha_crip[i] = senha_crip[i] + menor_letra - (i+3);
 	}
 	
-	//conferir senha
+	//conferir senha	
 	if (tamanho_senha_crip == tamanho_senha)
-	{
+	{												
 		for (i=0; i<tamanho_senha; i++)
 		{
 			if (senha_crip[i] == senha_digitada[i])
@@ -143,8 +155,24 @@ int descriptografar(char *senha, char *nome)
 	}
 	else
 	{
+		//extrair tamanho de cada campo
+		for (i=0; i<contador; i++)
+		{
+			tam_comentarioA[i] = 0;
+			tam_loginA[i] = 0;
+			tam_senhaA[i] = 0;
+			fseek(img_copia, pos_tam_comentarioA[i], SEEK_SET);
+			fread(&tam_comentarioA[i], 1, 1, img_copia);
+printf("tam_comentarioA[%d]: %d\n", i, tam_comentarioA[i]);
+			fseek(img_copia, pos_tam_loginA[i], SEEK_SET);
+			fread(&tam_loginA[i], 1, 1, img_copia);
+printf("tam_loginA[%d]: %d\n", i, tam_loginA[i]);
+			fseek(img_copia, pos_tam_senhaA[i], SEEK_SET);
+			fread(&tam_senhaA[i], 1, 1, img_copia);
+printf("tam_senhaA[%d]: %d\n\n", i, tam_senhaA[i]);
+		}
 		//extrair qtd caracteres
-		for (i=0; i<5; i++)
+/*		for (i=0; i<5; i++)
 		{
 			valor_contador[i] = 0;
 			fseek(img_copia, posicao_contador[i], SEEK_SET);
@@ -152,33 +180,92 @@ int descriptografar(char *senha, char *nome)
 			contador_char += valor_contador[i];
 		}
 		int posicao_campo[contador_char];
-		char campo[contador_char];
+		char campo[contador_char];				*/
 		
 		//mudar posição dos caracteres de cada campo
-		for (i=0; i<contador_char; i++)
+		for (i=0; i<contador; i++)
 		{
-	//		for (j=0, j<tam_campo[i]; j++)
-	//		{
-				posicao_campo[i] = ultima_posicao + nova_posicao;
-				ultima_posicao = posicao_campo[i];
-	//			campo[i][j] = campo[i][j] - (menor_letra + maior_letra)/10;
-	//		}
+			if (tam_comentarioA[i] > 0)
+			{
+				for (j=0; j<tam_comentarioA[i]; j++)
+				{
+					posicao_comentarioA[i][j] = ultima_posicao + nova_posicao;
+					ultima_posicao = posicao_comentarioA[i][j];
+					comentarioA[i][j] = comentarioA[i][j] - (menor_letra + maior_letra)/10;
+				}
+			}
+			if (tam_loginA[i] > 0)
+			{
+				for (j=0; j<tam_loginA[i]; j++)
+				{
+//printf("tam_loginA[%d]: %d\n", j, tam_loginA[i]);
+					posicao_loginA[i][j] = ultima_posicao + nova_posicao;
+					ultima_posicao = posicao_loginA[i][j];
+					loginA[i][j] = loginA[i][j] - (menor_letra + maior_letra)/10;
+				}
+			}
+			if (tam_senhaA[i] > 0)
+			{
+				for (j=0; j<tam_senhaA[i]; j++)
+				{
+					posicao_senhaA[i][j] = ultima_posicao + nova_posicao;
+					ultima_posicao = posicao_senhaA[i][j];
+					senhaA[i][j] = senhaA[i][j] - (menor_letra + maior_letra)/10;
+				}
+			}
 		}
-		
+	
 		//extrair caracteres
-		printf("\ncaracteres preenchidos: ");
-		for (i=0; i<contador_char; i++)
+		for (i=0; i<contador; i++)
 		{
-	//		for (j=0, j<tam_campo[i]; j++)
-	//		{	
-				fseek(img_copia, posicao_campo[i], SEEK_SET);
-				fread(&campo[i], 1, 1, img_copia);
-				campo[i] = campo[i] - (menor_letra + maior_letra)/10;
-				printf("%c", campo[i]);
-	//		}
+			if (tam_comentarioA[i] > 0)
+			{
+				for (j=0; j<tam_comentarioA[i]; j++)
+				{
+				fseek(img_copia, posicao_comentarioA[i][j], SEEK_SET);
+				fread(&comentarioA[i][j], 1, 1, img_copia);
+				comentarioA[i][j] = comentarioA[i][j] - (menor_letra + maior_letra)/10;
+				}
+			}
+			if (tam_loginA[i] > 0)
+			{
+				for (j=0; j<tam_loginA[i]; j++)
+				{
+				fseek(img_copia, posicao_loginA[i][j], SEEK_SET);
+				fread(&loginA[i][j], 1, 1, img_copia);
+				loginA[i][j] = loginA[i][j] - (menor_letra + maior_letra)/10;
+				}
+			}
+			if (tam_senhaA[i] > 0)
+			{
+				for (j=0; j<tam_senhaA[i]; j++)
+				{
+				fseek(img_copia, posicao_senhaA[i][j], SEEK_SET);
+				fread(&senhaA[i][j], 1, 1, img_copia);
+				senhaA[i][j] = senhaA[i][j] - (menor_letra + maior_letra)/10;
+				}
+			}
+		}				
+	}	
+	
+	//TESTE - leitura do que foi extraído da imagem
+	for (i=0; i<contador; i++)
+	{
+		printf("i=%d:\n", i);
+		if (tam_comentarioA[i] > 0)
+		{
+			puts(comentarioA[i]);
 		}
-		printf("\n\n");
-	}
+		if (tam_loginA[i] > 0)
+		{
+			puts(loginA[i]);
+		}
+		if (tam_senhaA[i] > 0)
+		{
+			puts(senhaA[i]);
+		}
+	}	
+	
 	fclose(img_copia);
 	system("PAUSE");
 	return senha_confere;
