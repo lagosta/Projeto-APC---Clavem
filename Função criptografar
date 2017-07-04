@@ -1,43 +1,52 @@
 #include <stdlib.h>
 #include <stdio.h>
+#define MAX 15
 
-int criptografar(char*, char**, int);
+int criptografar(char*, char comentarioA[MAX][20], char loginA[MAX][20], char senhaA[MAX][30], int);
 
-
+//entrada pra teste da função
 int main()
 {
+	char comentarioA[MAX][20];
+	char loginA[MAX][20];
+	char senhaA[MAX][30];
+	
 	char senhaM[10];
-	char **campo;
 	int imageE;
 	int i, j;
-	campo = (char**) malloc(5*sizeof(char*));
-	for (i=0; i<5; i++)
-	{
-		campo[i] = (char*) malloc(10*sizeof(char));
-	}
 	
 	printf("senha: ");
 	gets(senhaM);
-	for (i=0; i<5; i++)
-	{
-		printf("campo %d: ", i);
-		gets(campo[i]);
-	}
+	
 	printf("imagem (1, 2, 3 ou 4): ");
 	scanf("%d", &imageE);
+	getchar();
 	
-	
-	criptografar(senhaM, campo, imageE);
+	printf("comentarioA[0]: ");
+	gets(comentarioA[0]);
+	printf("comentarioA[1]: ");
+	gets(comentarioA[1]);
+	printf("loginA[0]: ");
+	gets(loginA[0]);
+	printf("loginA[1]: ");
+	gets(loginA[1]);
+	printf("senhaA[0]: ");
+	gets(senhaA[0]);
+	printf("senhaA[1]: ");
+	gets(senhaA[1]);	
+	criptografar(senhaM, comentarioA, loginA, senhaA, imageE);
 	
 	return 0;
 }
 
 
-int criptografar(char *senha, char **campo, int imagem)
+int criptografar(char *senha, char comentarioA[MAX][20], char loginA[MAX][20], char senhaA[MAX][30], int imagem)
 {
-	int tamanho_senha = 0, maior_letra = 0, menor_letra = 255, soma = 0, contador_char = 0; //<<contar caracteres a criptografar; 
-	int *posicao_senha, posicao_campo[5/*n_campo*/][10/*n_tamcampo*/], tam_campo[5/*n_campo*/]; //guardar junto da senha pra saber até onde descriptografar
-	int i, j, nova_posicao, ultima_posicao, posicao_contador[5], valor_contador[5];
+	int tamanho_senha = 0, maior_letra = 0, menor_letra = 255, soma = 0, contador_char = 0;				//<<contar caracteres a criptografar; 
+	int *posicao_senha, i, j, nova_posicao, ultima_posicao, valor_contador[5], posicao_contador[5];		//guardar junto da senha pra saber até onde descriptografar
+	int posicao_comentarioA[MAX][20], tam_comentarioA[MAX], pos_tam_comentarioA[MAX];
+	int posicao_loginA[MAX][20], tam_loginA[MAX], pos_tam_loginA[MAX];
+	int posicao_senhaA[MAX][20], tam_senhaA[MAX], pos_tam_senhaA[MAX];
 	int final_img, copiar, posicao_tamanho_senha, tamanho_senha_crip;
 	FILE *img_original, *img_copia;
 	
@@ -64,7 +73,7 @@ int criptografar(char *senha, char **campo, int imagem)
 	
 	//mudar valor dos caracteres da senha e posições na imagem
 	nova_posicao = tamanho_senha*(maior_letra-menor_letra) + soma;
-	posicao_tamanho_senha = nova_posicao + 15;
+	posicao_tamanho_senha = nova_posicao + 18;
 	for (i=0; i<tamanho_senha; i++)
 	{
 		if (i == 0)
@@ -80,14 +89,26 @@ int criptografar(char *senha, char **campo, int imagem)
 	}
 	
 	//achar tamanho de cada campo preenchido
-	for (i=0; i<5/*n_campo*/; i++)
+	for (i=0; i<MAX; i++)
 	{
-		tam_campo[i] = 0;
-		while (campo[i][tam_campo[i]] != '\0')
+		tam_comentarioA[i] = 0;
+		while (comentarioA[i][tam_comentarioA[i]] != '\0')
 		{
-			tam_campo[i]++;
+			tam_comentarioA[i]++;
 			contador_char++;
 		}
+		tam_loginA[i] = 0;
+		while (loginA[i][tam_loginA[i]] != '\0')
+		{
+			tam_loginA[i]++;
+			contador_char++;
+		}
+		tam_senhaA[i] = 0;
+		while (senhaA[i][tam_senhaA[i]] != '\0')
+		{
+			tam_senhaA[i]++;
+			contador_char++;
+		}		
 	}
 	
 	//quantidade de caracteres preenchidos
@@ -112,14 +133,43 @@ int criptografar(char *senha, char **campo, int imagem)
 		ultima_posicao = posicao_contador[i];
 	}
 	
-	//mudar valor e posição dos caracteres de cada campo
-	for (i=0; i<5/*n_campo*/; i++)
+	//local dos tamanhos de cada campo
+	for (i=0; i<MAX; i++)
 	{
-		for (j=0; j<tam_campo[i]; j++)
+		pos_tam_comentarioA[i] = tamanho_senha*(maior_letra-menor_letra) + soma + 1 + i;
+		pos_tam_loginA[i] = tamanho_senha*(maior_letra-menor_letra) + soma + 21 + i;
+		pos_tam_senhaA[i] = tamanho_senha*(maior_letra-menor_letra) + soma + 41 + i;
+	}	
+	
+	//mudar valor e posição dos caracteres de cada campo
+	for (i=0; i<MAX; i++)
+	{
+		if (tam_comentarioA[i] > 0)
 		{
-			posicao_campo[i][j] = ultima_posicao + nova_posicao;
-			ultima_posicao = posicao_campo[i][j];
-			campo[i][j] = campo[i][j] + (menor_letra + maior_letra)/10;
+			for (j=0; j<tam_comentarioA[i]; j++)
+			{
+				posicao_comentarioA[i][j] = ultima_posicao + nova_posicao;
+				ultima_posicao = posicao_comentarioA[i][j];
+				comentarioA[i][j] = comentarioA[i][j] + (menor_letra + maior_letra)/10;
+			}
+		}
+		if (tam_loginA[i] > 0)
+		{
+			for (j=0; j<tam_loginA[i]; j++)
+			{
+				posicao_loginA[i][j] = ultima_posicao + nova_posicao;
+				ultima_posicao = posicao_loginA[i][j];
+				loginA[i][j] = loginA[i][j] + (menor_letra + maior_letra)/10;
+			}
+		}
+		if (tam_senhaA[i] > 0)
+		{
+			for (j=0; j<tam_senhaA[i]; j++)
+			{
+				posicao_senhaA[i][j] = ultima_posicao + nova_posicao;
+				ultima_posicao = posicao_senhaA[i][j];
+				senhaA[i][j] = senhaA[i][j] + (menor_letra + maior_letra)/10;
+			}
 		}
 	}
 	
@@ -146,7 +196,7 @@ int criptografar(char *senha, char **campo, int imagem)
  	fread(&final_img, 4, 1, img_original);
 	
 	//criar cópia da imagem pra fazer alterações
-	img_copia = fopen("Imagem criptografada.bmp", "w");
+	img_copia = fopen("img crip.bmp", "w");
 	for (i=0; i<final_img; i++)
 	{
 		fseek(img_original, i, SEEK_SET);
@@ -172,14 +222,44 @@ int criptografar(char *senha, char **campo, int imagem)
 		fwrite(&valor_contador[i], 1, 1, img_copia);
 	}
 	
-	//guardar caracteres
-	for (i=0; i<5/*n_campo*/; i++)
+	//guardar tamanho campo
+	for (i=0; i<MAX; i++)
 	{
-		for (j=0; j<tam_campo[i]; j++)
-		{	
-			fseek(img_copia, posicao_campo[i][j], SEEK_SET);
-			fwrite(&campo[i][j], 1, 1, img_copia);
+		fseek(img_copia, pos_tam_comentarioA[i], SEEK_SET);
+		fwrite(&tam_comentarioA[i], 1, 1, img_copia);
+		fseek(img_copia, pos_tam_loginA[i], SEEK_SET);
+		fwrite(&tam_loginA[i], 1, 1, img_copia);
+		fseek(img_copia, pos_tam_senhaA[i], SEEK_SET);
+		fwrite(&tam_senhaA[i], 1, 1, img_copia);
+	}
+	
+	//guardar caracteres
+	for (i=0; i<MAX; i++)
+	{
+		if (tam_comentarioA[i] > 0)
+		{
+			for (j=0; j<tam_comentarioA[i]; j++)
+			{	
+				fseek(img_copia, posicao_comentarioA[i][j], SEEK_SET);
+				fwrite(&comentarioA[i][j], 1, 1, img_copia);
+			}			
 		}
+		if (tam_loginA[i] > 0)
+		{
+			for (j=0; j<tam_loginA[i]; j++)
+			{	
+				fseek(img_copia, posicao_loginA[i][j], SEEK_SET);
+				fwrite(&loginA[i][j], 1, 1, img_copia);
+			}			
+		}
+		if (tam_senhaA[i] > 0)
+		{
+			for (j=0; j<tam_senhaA[i]; j++)
+			{	
+				fseek(img_copia, posicao_senhaA[i][j], SEEK_SET);
+				fwrite(&senhaA[i][j], 1, 1, img_copia);
+			}			
+		}		
 	}
 	
 	fclose(img_original);
@@ -187,3 +267,4 @@ int criptografar(char *senha, char **campo, int imagem)
 	system("PAUSE");
 	return 0;
 }
+
